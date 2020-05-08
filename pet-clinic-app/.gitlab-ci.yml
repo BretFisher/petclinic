@@ -1,0 +1,120 @@
+variables:
+  NO_PROXY: "$GITLAB_HOST,docker:2375,docker:2376,localhost,127.0.0.1"
+  GITLAB_HOST: "gitlab"
+
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository -DproxySet=true -Dhttp.nonProxyHosts=$GITLAB_HOST -Dmaven.wagon.http.ssl.insecure=true"
+  MAVEN_CLI_OPTS: "--batch-mode --errors"
+
+  SAST_DISABLE_DIND: "true"
+  DS_DEFAULT_ANALYZERS: "gemnasium-maven"
+  DS_DISABLE_DIND: "true"
+
+include:
+  - template: SAST.gitlab-ci.yml
+  - template: Dependency-Scanning.gitlab-ci.yml
+
+stages:
+  - build  
+  - performance test
+  - test  
+  - network test
+  - image
+  - smoke test
+
+build-artifacts:  
+  image: maven:3.6.3-jdk-8  
+  stage: build
+  cache:        
+    key: maven-m2        
+    paths:            
+      - .m2/repository/ 
+  script:    
+    - mvn -version    
+    - mvn package $MAVEN_CLI_OPTS 
+  artifacts:    
+    paths:      
+      - /builds/pcs/pet-clinic-app/spring-petclinic-server/target/petclinic.jar
+
+gemnasium-maven-dependency_scanning:
+  cache:        
+    key: maven-m2        
+    paths:            
+      - .m2/repository/ 
+  variables:
+    DS_MAJOR_VERSION: "2.7.0"
+  
+sast:
+  stage: test
+  cache:    
+    key: maven-m2    
+    paths:      
+      - .m2/repository/
+  variables:
+    MAVEN_REPO_PATH: $CI_PROJECT_DIR/.m2/repository
+  script:
+    - mvn package $MAVEN_CLI_OPTS
+
+spotbugs-sast: 
+  variables:
+    SAST_ANALYZER_IMAGE_TAG: "2.4.0"
+  cache:        
+    key: maven-m2        
+    paths:            
+      - .m2/repository/
+
+eslint-sast:
+  variables:
+    SAST_ANALYZER_IMAGE_TAG: "2.0.4"
+
+nodejs-scan-sast:
+  variables:
+    SAST_ANALYZER_IMAGE_TAG: "2.2.0"
+
+secrets-sast:
+  variables:
+    SAST_ANALYZER_IMAGE_TAG: "2.2.2"
+
+Docker build and push to repo:
+  stage: image
+  image: docker:19.03.6
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+  services:
+    - name: docker:19.03.6-dind
+      entrypoint:
+        - /bin/sh
+        - -c
+        - dockerd-entrypoint.sh --insecure-registry $GITLAB_HOST:4567 || exit
+  script:
+    - cp /builds/pcs/pet-clinic-app/spring-petclinic-server/target/petclinic.jar $CI_PROJECT_DIR/spring-petclinic-server/src/main/docker/petclinic.jar
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - docker build -t $CI_REGISTRY_IMAGE $CI_PROJECT_DIR/spring-petclinic-server/src/main/docker/
+    - docker push "$CI_REGISTRY_IMAGE"
+
+smoke test job:
+  stage: smoke test
+  image: node:12.16.1-alpine3.11
+  cache:
+    key: docker_runner_pipeline_node_modules
+    paths:
+      - node_modules/
+  before_script:
+    - cd ./spring-petclinic-automation/api/functional/
+    - npm install
+  script:
+    - npm test
+  artifacts:
+    paths:
+      - /builds/pcs/pet-clinic-app/spring-petclinic-automation/api/functional/target/test-results.html
+
+k6-loadtest:
+  image:
+    name: loadimpact/k6:0.26.1
+    entrypoint: [""]
+  stage: performance test
+  script:
+    - echo "executing local k6 in k6 container..."
+    - k6 run --out json=./spring-petclinic-automation/api/performance/performance_test_result.json ./spring-petclinic-automation/api/performance/performance-test.js
+  artifacts:
+    paths:
+      - /builds/pcs/pet-clinic-app/spring-petclinic-automation/api/performance/performance_test_result.json

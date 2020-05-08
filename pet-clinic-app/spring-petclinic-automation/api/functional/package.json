@@ -1,0 +1,19 @@
+{
+  "name": "smoketest",
+  "version": "1.0.0",
+  "description": "## Understanding the Spring Petclinic application with a few diagrams [See the presentation here](http://fr.slideshare.net/AntoineRey/spring-framework-petclinic-sample-application)",
+  "main": "pet-clinic-api-smoke.test",
+  "dependencies": {
+    "jest": "^24.9.0",
+    "jest-extended": "^0.11.2",
+    "jest-html-reporters": "^1.1.6",
+    "log4js": "^6.1.0",
+    "unirest": "^0.6.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "jest"
+  },
+  "author": "Breandan McClure",
+  "license": "ISC"
+}
