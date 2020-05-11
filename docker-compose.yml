@@ -1,24 +1,39 @@
-version: '2'
+version: '2.4'
+
+volumes:
+  mysql:
+
 services:
-  mysql-petclinic:
+  mysql:
     image: mysql:5.7
-    container_name: mysql-petclinic
+    healthcheck:
+      test: /healthcheck/mysql-healthcheck.sh
+      interval: 5s
+      start_period: 30s
     ports:
       - 3306:3306
     environment:
       - MYSQL_ROOT_PASSWORD=petclinic
       - MYSQL_DATABASE=petclinic
     volumes:
-      - "./conf.d:/etc/mysql/conf.d:ro"
+      - mysql:/var/lib/mysql
+      - ./mysql-healthcheck:/healthcheck
 
 
-  spring-petclinic:
-    image: arey/springboot-petclinic
-    container_name: spring-petclinic
+  petclinic:
     mem_limit: 512M
+    build:
+      context: ./pet-clinic-app
+      # run the build, test or prod stages
+      target: build
     depends_on:
-      - mysql-petclinic
+     mysql:
+       condition: service_healthy
+    volumes:
+      - ./pet-clinic-app:/app
     ports:
      - 8080:8080
     environment:
      - SPRING_PROFILES_ACTIVE=mysql,prod
+     - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/petclinic?useUnicode=true
+

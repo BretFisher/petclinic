@@ -111,7 +111,7 @@
             </plugin>
 
             <!-- Spring Boot Actuator displays build-related information if a META-INF/build-info.properties file is present -->
-            <plugin>
+            <!-- <plugin>
                 <groupId>pl.project13.maven</groupId>
                 <artifactId>git-commit-id-plugin</artifactId>
                 <executions>
@@ -128,7 +128,7 @@
                     <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties
                     </generateGitPropertiesFilename>
                 </configuration>
-            </plugin>
+            </plugin> -->
 
             <plugin>
                 <groupId>com.spotify</groupId>
