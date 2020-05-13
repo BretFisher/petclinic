@@ -2,7 +2,7 @@
 
 Demo of taking the [petclinic Java app](https://github.com/spring-petclinic/spring-petclinic-angularjs) and adding the proper Docker files to make it easier for dev, test, and prod.
 
-Check the [`pet-clinic-app\Dockerfile`](pet-clinic-app\Dockerfile) for multi-stage building of a .jar with maven
+Check the [`pet-clinic-app/Dockerfile`](pet-clinic-app/Dockerfile) for multi-stage building of a .jar with maven
 
 Check the [`docker-compose.yml`](docker-compose.yml) for a full-featured Dev setup with depends_on using true "wait-for-it" style dependency startup
 
