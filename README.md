@@ -7,7 +7,7 @@ Check the [`pet-clinic-app/Dockerfile`](pet-clinic-app/Dockerfile) for multi-sta
 Check the [`docker-compose.yml`](docker-compose.yml) for a full-featured Dev setup with depends_on using true "wait-for-it" style dependency startup
 
 ## Bugs
-
+vfdvdfvfv
 - This currently seems to skip startup of the `sprint-petclinic-client` frontend, or at least missing a lot of static assets (js/css). PR's welcome (not sure if it's an app issue, or a docker build/run issue)
 
 ## Features
